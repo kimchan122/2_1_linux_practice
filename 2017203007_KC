@@ -1,0 +1,361 @@
+#!/bin/bash
+#made by 2017203007 KIM CHAN
+
+countdir=$(ls -al `pwd` | grep ^d | wc -l)
+countC=$(ls -al `pwd` | grep -i ".c$" | wc -l)
+countH=$(ls -al `pwd` | grep -i ".h$" | wc -l)
+
+rightline=0
+setline=4
+checkmode=1
+checkupdown=3
+checkdir=0
+checkenter=0
+Twenty=20
+listcount=1
+startright=0
+checkjoong=0
+Names=()
+
+RESET(){
+countdir=$(ls -al `pwd` | grep ^d | wc -l)
+countC=$(ls -al `pwd` | grep -i ".c$" | wc -l)
+countH=$(ls -al `pwd` | grep -i ".h$" | wc -l)
+}
+
+DISPLAY_BOARD(){
+for((i=1;i<=26;i++))
+do
+	for((j=0;j<=82;j++))
+	do
+		tput cup $i $j
+		echo '[47m'" "
+	done
+done
+}
+
+CURRENT_PATH(){
+tput cup 2 1
+        echo '[35m'"Current Path : `pwd`"'[30m'
+}
+
+DISPLAY_BAR(){ # UI 바 출력
+tput cup 0 0
+        echo '[46m''[30m'"File Explorer"'[47m'
+CURRENT_PATH
+tput cup 25 4
+        echo "C file : $countC"
+tput cup 25 25
+        echo "Header : $countH"
+for i in 2 25
+do
+for j in 0 82
+do
+tput cup $i $j
+echo "|"
+done
+done
+
+for((i=4;i<=23;i++))
+do
+for j in 0 41 82
+do
+        tput cup $i $j
+        echo "|"
+done
+done
+for((i=0;i<=82;i++))
+do
+for j in 1 3 24 26
+do
+        tput cup $j $i
+        echo -n "-"
+done
+done
+
+}
+
+DISPLAY_LEFT_DIR(){
+Twenty=20
+dir=$(ls -ahl `pwd` | grep ^d | head -$Twenty | cut -f 2 -d ":" | cut -c 4-20 | sed 's/\(.*\)/ \1/')
+power=$(ls -ahl `pwd` | grep ^d | head -$Twenty | cut -f -1 -d' ' | sed 's/\(.*\)/                   \1/')
+size=$(ls -ahl `pwd` | grep ^d | head -$Twenty | tr -s ' ' | cut -d ' ' -f 5 | sed 's/\(.*\)/                                  \1/')
+Twenty=`expr $Twenty - $countdir`
+tput cup 4 0
+echo '[34m'"${size}"
+tput cup 4 34
+echo '-    '
+tput cup 5 34
+echo '-    '
+tput cup 4 0
+echo "${power}"
+tput cup 4 0
+echo "${dir}[30m[47m"
+}
+
+DISPLAY_LEFT_C(){
+C=$(ls -ahl `pwd` | grep -i ".c$" | cut -f 2 -d ":" | cut -c 4-20 | sed 's/\(.*\)/ \1/')
+power=$(ls -ahl `pwd` | grep -i ".c$" | cut -f 1 -d " " | sed 's/\(.*\)/                   \1/')
+size=$(ls -ahl `pwd` | grep -i ".c$" | tr -s ' ' | cut -d ' ' -f 5 | sed 's/\(.*\)/                                  \1/')
+Twenty=`expr $Twenty - $countC`
+Cstart=`expr $countdir + 4`
+tput cup $Cstart 0
+echo '[32m'"${size}"
+tput cup $Cstart 0
+echo "${power}"
+tput cup $Cstart 0
+echo "${C}[30m[47m"
+}
+
+DISPLAY_LEFT_H(){
+H=$(ls -ahl `pwd` | grep -i ".h$" | cut -f 2 -d ":" | cut -c 4-20 | sed 's/\(.*\)/ \1/')
+power=$(ls -ahl `pwd` | grep -i ".h$" | cut -f 1 -d " " | sed 's/\(.*\)/                   \1/')
+size=$(ls -ahl `pwd` | grep -i ".h$" | tr -s ' ' | cut -d ' ' -f 5 | sed 's/\(.*\)/                                  \1/')
+Twenty=`expr $Twenty - $countdir - $countC`
+Hstart=`expr $countdir + $countC + 4`
+tput cup $Hstart 0
+echo '[30m'"${size}"
+tput cup $Hstart 0
+echo "${power}"
+tput cup $Hstart 0
+echo "${H}[30m"
+}
+
+DISPLAY_LEFT(){
+DISPLAY_LEFT_DIR
+while true
+do
+	if [[ "$Twenty" -le 0 ]]
+	then break
+	else
+		DISPLAY_LEFT_C
+		if [[ "$Twenty" -le 0 ]]
+		then break
+		else
+			DISPLAY_LEFT_H
+		fi
+	fi
+done
+}
+
+DISPLAY_RIGHT(){
+if [ $startright -eq 1 ]
+then
+	tput cup 4 43
+	echo "[31m${Names[0]}[30m"
+fi
+Arr=$(`echo ${Names[@]} | sort`)
+tput cup 33 2
+echo "$Carr"
+for((i=$startright;i<$listcount;i++))
+do
+	tput cup `expr $i + 4` 43
+	echo "${Arr[i]}"
+done
+}
+
+frame(){
+DISPLAY_BOARD
+DISPLAY_LEFT
+DISPLAY_RIGHT
+DISPLAY_BAR
+}
+
+leftcursor(){
+if [ `expr $setline - 3` -le $countdir ] && [ "$checkenter" -eq 1 ]
+then
+	next=`pwd`
+	path=$(ls -ahl `pwd` | grep ^d | head -`expr $setline - 3` | tail -1 | cut -f 2 -d ":" | cut -c 4-)
+	next="$path"
+	cd "$path"
+	checkenter=0
+	setline=4
+	RESET
+	frame
+	CURRENT_PATH
+	leftcursor
+else
+	sumline=`expr $countdir + $countC + $countH + 3`
+	if [[ $sumline -gt 23 ]]
+	then
+		sumline=23
+	else
+		sumline=$sumline
+	fi
+	if [[ $setline -lt 4 ]]
+	then
+		setline=4
+	elif [[ $setline -gt $sumline ]]
+	then
+		setline=$sumline
+	else
+		setline=$setline
+	fi
+	count=`expr $countdir + 3`
+	if [[ $count -le 23 ]]
+	then
+		count=$count
+	else
+		count=23
+	fi
+	if [ "$setline" -le "$count" ]
+	then
+		now=$(ls -ahl `pwd` | grep ^d | head -`expr $setline - 3` | tail -1 | cut -f 2 -d ":" | cut -c 4-20 | sed 's/\(.*\)/\1/')
+		power=$(ls -ahl `pwd` | grep ^d | head -`expr $setline - 3` | tail -1 | cut -f -1 -d' ' | sed 's/\(.*\)/                  \1/')
+		size=$(ls -ahl `pwd` | grep ^d | head -`expr $setline - 3` | tail -1 | tr -s ' ' | cut -d ' ' -f 5 | sed 's/\(.*\)/                                 \1/')
+	else
+		count=`expr $count + $countC`
+		if [ $count -gt 24 ]
+		then
+			count=$count
+		fi
+		if [ "$setline" -le "$count" ]
+		then
+			now=$(ls -ahl `pwd` | grep -i ".c$" | cut -f 2 -d ":" | cut -c 4-20 | sed 's/\(.*\)/\1/' | head -`expr $setline - 3 - $countdir` | tail -1)
+			power=$(ls -ahl `pwd` | grep -i ".c$" | cut -f 1 -d " " | sed 's/\(.*\)/                  \1/' | head -`expr $setline - 3 - $countdir` | tail -1)
+			size=$(ls -ahl `pwd` | grep -i ".c$" | tr -s ' ' | cut -d ' ' -f 5 | sed 's/\(.*\)/                                 \1/' | head -`expr $setline - 3 - $countdir` | tail -1)
+		else
+			count=`expr $count + $countH`
+			if [ "$count" -gt 24 ]
+			then
+				count=$count
+			else
+				count=23
+			fi
+			now=$(ls -ahl `pwd` | grep -i ".h$" | cut -f 2 -d ":" | cut -c 4-20 | sed 's/\(.*\)/\1/' | head -`expr $setline - 3 - $countdir - $countC` | tail -1)
+			power=$(ls -ahl `pwd` | grep -i ".h$" | cut -f 1 -d " " | sed 's/\(.*\)/                  \1/' | head -`expr $setline - 3 - $countdir - $countC` | tail -1)
+			size=$(ls -ahl `pwd` | grep -i ".h$" | tr -s ' ' | cut -d ' ' -f 5 | sed 's/\(.*\)/                                 \1/' | head -`expr $setline - 3 - $countdir - $countC` | tail -1)
+		fi
+	fi
+	tput cup $setline 1
+        echo '[44m[37m'"                                        "
+        tput cup $setline 1
+        gong="-    "
+        if [[ "$setline" -eq 4 ]] || [[ "$setline" -eq 5 ]]
+        then
+                echo "[44m[37m                                 -      "
+        else
+                echo "[44m[37m${size}"
+        fi
+        tput cup $setline 1
+        echo "${power}"
+        tput cup $setline 1
+        echo "${now}[30m[47m"
+#        tput cup $setline 1
+	tput cup 30 40
+	echo "$now"
+	tput cup 31 40
+	echo "$listcount"
+	if [ "$now" == "main.c" ] && [ $checkenter -eq 1 ]
+	then
+		for((i=0;i<$listcount;i++))
+		do
+			if [ "${Names[i]}" == "$now" ]
+			then
+				checkjoong=1
+			fi
+		done
+		if [ $checkjoong -eq 1 ]
+		then
+			echo ""
+		else
+			Names[0]+=$now
+			listcount=`expr $listcount + 1`
+			startright=1
+		fi
+		checkenter=0
+		checkjoong=0
+	elif [[ $checkenter -eq 1 ]] && [[ $setline -gt `expr $countdir + 3` ]]
+	then
+		for((i=0;i<$listcount;i++))
+		do
+			echo "NAMES{$i} : ${Names[i]}, NOW : $now"
+			if [ "${Names[i]}" == "$now" ]
+			then
+				checkjoong=1
+			fi
+		done
+		if [ $checkjoong -eq 1 ]
+		then
+			echo ""
+		else
+			${Names[`expr $listcount`]} += $now #배열에 값을 넣는게 아직 익숙하지가 않아서 여기서 막혀서 몇일을 소비했네요 ㅡㅡ;
+#			그래도 굉장히 재미있는 강의였습니다! 조교님들 모두 고생 많으셨습니다!
+			listcount=`expr $listcount + 1`
+		fi
+		checkenter=0
+		checkjoong=0
+	else
+		checkjoong=0
+		checkenter=0
+	fi
+        checkenter=0
+	checkjoong=0
+fi
+}
+
+cursor(){
+if [[ $checkmode -eq 1 ]]
+then
+	leftcursor
+elif [[ $checkmode -eq 2 ]]
+then
+#	rightcursor
+	echo ""
+fi
+}
+
+key(){
+tput cup 27 0
+read -n 3 key # 위로 가니까 -1
+if [ "${key}" = "[A" ]
+then
+#echo "up"
+RESET
+checkupdown=3
+setline=`expr $setline - 1`
+
+elif [ "${key}" = "[B" ] # 아래로 가니까 +1
+then
+#echo "down"
+RESET
+checkupdown=4
+setline=`expr $setline + 1`
+
+elif [ "${key}" = "[C" ]
+then
+#tput cup 29 0
+#echo "right"
+RESET
+setline=4
+checkmode=2
+
+elif [ "${key}" = "[D" ]
+then
+#tput cup 29 0
+#echo "left"
+RESET
+setline=4
+checkmode=1
+
+elif [ "${key}" = "" ]
+then
+RESET
+#setline=4
+checkenter=1
+
+else echo ""
+fi
+}
+
+main(){
+while true
+do
+	echo '[46m''[30m'""
+	clear
+	frame
+	cursor
+	key
+done
+}
+main
